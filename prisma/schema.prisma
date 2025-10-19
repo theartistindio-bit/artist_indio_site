@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String?
+  role         String   @default("VISITOR")
+  createdAt    DateTime @default(now())
+  purchases    Purchase[]
+}
+
+model Purchase {
+  id         String   @id @default(cuid())
+  userId     String
+  email      String
+  phone      String?
+  songId     String?
+  merchId    String?
+  totalCents Int      @default(0)
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+  tokens     DownloadToken[]
+}
+
+model DownloadToken {
+  id               String   @id @default(cuid())
+  purchaseId       String
+  token            String   @unique
+  expiresAt        DateTime
+  downloadsLeft    Int      @default(3)
+  recognizedEmail  String
+  recognizedPhone  String?
+  createdAt        DateTime @default(now())
+  purchase         Purchase @relation(fields: [purchaseId], references: [id])
+}
+
+model RateLimit {
+  key         String   @id
+  windowStart DateTime
+  count       Int
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actor     String
+  action    String
+  target    String?
+  meta      String?
+  createdAt DateTime @default(now())
+}
